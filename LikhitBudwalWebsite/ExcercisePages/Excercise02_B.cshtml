@@ -1,0 +1,66 @@
+﻿@{
+    Page.Title = "Results";
+    Layout = "~/_Layout.cshtml";
+
+
+    var ArtistId = Request.QueryString["cid"];
+
+    if (string.IsNullOrEmpty(ArtistId))
+    {
+        Response.Redirect("Excercise02.cshtml");
+    }
+
+    var db = Database.Open("CDB");
+    var ddlCommand = "SELECT Name "
+                        + "FROM Artists "
+                        + "WHERE ArtistId = @0";
+
+    string Name = db.QueryValue(ddlCommand, ArtistId);
+
+    string queryCommand = "SELECT AlbumId, Title, ArtistId, ReleaseYear, ReleaseLabel "
+                        + "FROM Albums "
+                        + "WHERE ArtistId = @0 "
+                        + "ORDER BY Title ";
+
+    var results = db.Query(queryCommand, ArtistId);
+
+    WebGrid grid = new WebGrid(results);
+}
+
+
+<div>
+    @section banner
+    {
+        <h1>Albums</h1>
+    }
+
+    <div class="container">
+        <h3>Albums by @Name </h3>
+
+        @grid.GetHtml(
+                tableStyle: "webgrid-table",
+                headerStyle: "webgrid-header",
+                alternatingRowStyle: "webgrid-alternate-row",
+                columns: grid.Columns(
+                        grid.Column(columnName: "AlbumId",
+                                    header: "Id",
+                                    style: "id-grid-style"),
+
+                        grid.Column(columnName: "Title",
+                                    header: "Title"),
+
+                        grid.Column(columnName: "ArtistId",
+                                    header: "ArtistId"),
+
+                        grid.Column(columnName: "ReleaseYear",
+                                    header: "ReleaseYear"),
+
+                        grid.Column(columnName: "ReleaseLabel",
+                                    header: "ReleaseLabel.")
+
+
+                        ))
+
+    </div>
+
+</div>

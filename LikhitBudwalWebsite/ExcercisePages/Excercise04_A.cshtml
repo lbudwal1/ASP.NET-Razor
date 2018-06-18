@@ -1,0 +1,155 @@
+﻿@{
+    Page.Title = "Title goes here";
+    Layout = "~/_Layout.cshtml";
+
+    string albumCategory = Request.Form["albumCategory"];
+    string artistText = Request.Form["artistText"];
+
+    string fetchArtist = Request.Form["formButton"];
+
+    if (string.IsNullOrEmpty(artistText))
+    {
+        artistText = "";
+
+
+    }
+
+    var db = Database.Open("CDB");
+
+    var queryComm = "SELECT ArtistId, Name "
+                    + "FROM Artists ";
+
+    var queryCommand = "SELECT AlbumId, Title, ArtistId, ReleaseYear, ReleaseLabel "
+                        + "FROM Albums ";
+
+
+    var resultSet = db.Query(queryComm, "%" + artistText + "%");
+
+    var resultSetTwo = db.Query(queryCommand);
+
+
+}
+
+
+
+
+@section banner
+       {
+    <h1>Excercise 4: Update and Delete</h1>
+}
+
+
+
+<div>
+
+    <form id="theForm" action="" method="post">
+        <div class="row">
+            <div class="col-md-2">
+                <h4>Enter artist name:</h4>
+                <input type="text" name="artistText" id="artistText" value="@artistText" /><br />
+                <button type="submit" name="formButton" value="left"
+                        class="btn btn-primary">
+                    Fetch Artist
+                </button>
+            </div>
+
+            <div class="col-sm-2">
+                <h4>Select your artist</h4>
+                <select name="albumCategory" id="albumCategory">
+                    <option value="0">select...</option>
+                    @foreach (var item in resultSet)
+                    {
+                        if (artistText == "")
+                        {
+
+                            <option style="display:none" value="@item[0]">@item[1]</option>
+                        }
+
+                        else
+                        {
+                            <option value="@item[0]">@item[1]</option>
+                        }
+
+                    }
+                </select><br />
+
+                <button type="submit" name="formButton" id="formButton" value="right"
+                        class="btn btn-primary">
+                    Fetch Albums
+                </button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+@if (IsPost)
+{
+
+    if (fetchArtist.Equals("left"))
+    {
+
+        if (artistText == "")
+        {
+            <p>Write Some thing first</p>
+
+
+        }
+
+        else
+        {
+            if (resultSet.Count() == 0)
+            {
+                <p class="info-message">Nothing is match with your search @artistText</p>
+            }
+
+
+            else
+            {
+
+
+                <p>Found</p>
+                albumCategory = resultSet.ToString();
+            }
+        }
+    }
+    else
+    {
+        if (albumCategory == "0")
+        {
+            <p>select your choice first</p>
+        }
+        else if (albumCategory == "")
+        {
+            <p>Please Write Artist Name or Id in Text Field</p>
+        }
+        else
+        {
+            var grid = new WebGrid(resultSetTwo);
+            @grid.GetHtml("table table-bordered table-striped table-hover",
+                                     mode: WebGridPagerModes.All,
+                                     lastText: "Last",
+                                     firstText: "First",
+                                     columns: grid.Columns(
+                                     grid.Column(columnName: "AlbumId", header: "AlbumID"),
+                                     grid.Column(columnName: "Title"),
+                                     grid.Column(columnName: "ArtistId", header: "ArtistID"),
+                                     grid.Column(columnName: "ReleaseYear", header: "Year"),
+                                     grid.Column(columnName: "ReleaseLabel", header: "Label"),
+                                     grid.Column(header: "", format: @<text><a href="~/ExcercisePages/Excercise04_B.cshtml?pid=@item.AlbumId">Edit</a></text>)
+                                                               ));
+
+        }
+    }
+}
+
+
+@* required for grid paging and sorting*@
+<script type="text/javascript">
+    var links = $('a[href*=page], a[href*=sort]'), form = $('form');
+    links.click(function () {
+        form.attr("action", this.href);
+        $(this).attr("href", "javascript:");
+        form.submit();
+    });
+</script>

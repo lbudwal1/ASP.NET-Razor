@@ -1,0 +1,97 @@
+﻿@{
+    Page.Title = "Excersice 01";
+    Layout = "~/_Layout.cshtml";
+
+    string customerNameInput = Request.Form["customerText"];
+    var buttonPress = Request.Form["Bt"];
+}
+
+@section head{
+    
+    <link href="~/StyleSheet.css" rel="stylesheet" />}
+
+@section banner
+{
+    <h1>Excercise01: Basic Form Processing</h1>
+}
+
+
+<div>
+    
+    
+    @if (IsPost)
+    {
+
+        string choices = Request.Form["meal"];
+
+        if (buttonPress.Equals("reset"))
+        {
+            customerNameInput = null;
+        }
+
+        if (buttonPress.Equals("submit"))
+        {
+
+            if (choices.IsEmpty() && customerNameInput.IsEmpty())
+            {
+                <p><span style="color:red">Please Enter Name and select your meal also</span></p>
+            }
+
+            else if (customerNameInput.IsEmpty())
+            {
+                <p><span style="color:red">Please Enter Name</span></p>
+                <ul>
+                    @foreach (string listing in choices.Split(','))
+                        {
+                        <li>@listing</li>
+                    }
+                </ul>
+
+            }
+
+            else if (choices.IsEmpty())
+            {
+                    <p><span style="color:red">Please Choose Your Meal</span></p>
+
+
+
+            }
+
+            else if (choices.IsEmpty())
+            {
+                <p><span style="color:red">Please Choose Your Meal</span></p>
+            }
+
+            else
+            {
+                <p>Hey @customerNameInput You Select:</p>
+                <ul>
+                    @foreach (string listing in choices.Split(','))
+                        {
+                        <li>@listing</li>
+                    }
+                </ul>
+            }
+        }
+    }
+
+
+    <form id="EX01" action="" method="post">
+        <div class="row">
+            <div class="col-md-3">
+                <h4>Customer Name:</h4>
+                <input type="text" name="customerText" id="customerText" value="@customerNameInput" placeholder="Enter Name Here" />
+            </div>
+
+            <div class="col-lg-9">
+                <label>Choice your Meal Items</label><br />
+                <input type="checkbox" name="meal" value="STEAK" />Steak<br />
+                <input type="checkbox" name="meal" value="SEAFOOD" />Seafood<br />
+                <input type="checkbox" name="meal" value="VEGATABLES" />Vegatables<br />
+            </div>
+
+            <button type="submit" id="Bt" name="Bt" class="btn btn-primary" value="submit">Submit</button>
+            <button type="submit" id="reset" name="Bt" class="btn" value="reset">Reset</button>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,202 @@
+﻿@{
+    Page.Title = "Album Edit";
+    Layout = "~/_Layout.cshtml";
+
+
+
+    var pid = Request.QueryString["pid"];
+    if (pid.IsEmpty())
+    {
+        Response.Redirect("Excercise04_A.cshtml");
+    }
+
+    var albumId = Request.Form["productId"];
+    var title = Request.Form["productName"];
+    var ArtistId = Request.Form["supplierList"];
+    var ReleaseYear = Request.Form["categoryList"];
+    var ReleaseLabel = Request.Form["quantityPerUnit"];
+
+    //capture which button was pressed
+    var theButton = Request.Form["theButton"];
+
+
+
+
+    var db = Database.Open("CDB");
+    string supplierSQL = "SELECT ArtistId, Name "
+                       + "FROM Artists ";
+
+
+    string productSQL = "SELECT AlbumId, Title, ArtistId, ReleaseYear, ReleaseLabel "
+                        + "FROM Albums "
+                        + "WHERE AlbumId = @0";
+
+    var suppliers = db.Query(supplierSQL);
+
+    var product = db.QuerySingle(productSQL, pid);
+
+    if(IsPost)
+    {
+        albumId = pid;
+    }
+}
+
+@section banner
+{
+    <h1>Album Edit - Update and Delete</h1>
+}
+@if (IsPost)
+{
+    if (theButton.Equals("cancel"))
+    {
+        albumId = "";
+        title = "";
+        ArtistId = "0";
+        ReleaseYear = "";
+        ReleaseLabel = "";
+
+
+        <p class="info-message" style="color:red">
+            User has cancelled the action.&nbsp;&nbsp;&nbsp;
+            <a href="~/ExcercisePages/Excercise04_A.cshtml">Back to search...</a>
+        </p>
+    }
+    else if (theButton.Equals("delete"))
+    {
+        if (string.IsNullOrEmpty(albumId))
+        {
+            <p class="error-message" style="color:red">
+                No Album selected. &nbsp;&nbsp;&nbsp;<a href="~/ExcercisePages/Excercise04_A.cshtml">Back to search...</a>
+            </p>
+        }
+        else
+        {
+            try
+            {
+                var deletecommmand = "DELETE Albums WHERE AlbumId = @0";
+                int results = db.Execute(deletecommmand, albumId);
+                if (results > 0)
+                {
+                    <p class="info-message" style="color:red">Album deleted.</p>
+
+                    albumId = "";
+                    title = "";
+                    ArtistId = "0";
+                    ReleaseYear = "";
+                    ReleaseLabel = "";
+
+                }
+                else
+                {
+                    <p class="error-message" style="color:red">
+                        Delete failed. No Album called @title with an id of @albumId on file.
+                    </p>
+                }
+
+            }
+            catch (Exception ex)
+            {
+                <p class="error-message" style="color:red">Deleted failed. Error @ex.Message</p>
+            }
+        }
+    }
+    else
+    {
+        if (string.IsNullOrEmpty(albumId))
+        {
+            <p class="error-message" style="color:red">No Album selected. &nbsp;&nbsp;<a href="~/ExcercisePages/Excercise04_A.cshtml">Back to search...</a></p>
+        }
+        else
+        {
+            if (Validation.IsValid())
+            {
+                try
+                {
+                    String updatecommmand = "UPDATE Albums SET "
+                                        + "Title = @0, "
+                                        + "ArtistId = @1, "
+                                        + "ReleaseYear = @2, "
+                                        + "ReleaseLabel = @3, ";
+                    int results = db.Execute(updatecommmand, title,
+                    ArtistId == "0" ? null : ArtistId,
+                    ReleaseYear == "0" ? null : ReleaseYear,
+                    string.IsNullOrEmpty(ReleaseLabel) ? null : ReleaseLabel);
+
+                    if (results > 0)
+                    {
+                        <p class="info-message">Album updated.</p>
+                    }
+                    else
+                    {
+                        <p class="error-message" style="color:red">
+                            Update failed. No Album called @title with an id of @albumId on file.
+                        </p>
+                    }
+                }
+                catch (Exception ex)
+                {
+                    <p class="error-message" style="color:red">Update failed. Error @ex.Message</p>
+
+                }
+            }
+        }
+    }
+}
+else //for IsPost
+{
+    product = db.QuerySingle(productSQL, pid);
+
+    albumId = product.AlbumId.ToString();
+    title = product.Title;
+    ArtistId = product.ArtistId == null ? "0" : product.ArtistId.ToString();
+    ReleaseYear = product.ReleaseYear == null ? "0" : product.ReleaseYear.ToString();
+    ReleaseLabel = product.ReleaseLabel;
+
+}
+
+<div class="form-group">
+    <form id="theForm" action="" method="post">
+        <div class="col-sm-5 text-right">
+            <label>Album ID</label><br />
+            <label>Title </label><br />
+            <label>ArtistId</label><br />
+            <label>ReleaseYear</label><br />
+            <label>Releaselabel</label><br />
+
+        </div>
+        <div class="col-sm-7">
+            <input type="text" name="albumId" value="@albumId" readonly /><br />
+            <input type="text" name="title" value="@title" /><br />
+            <select name="supplierList">
+                <option value="0">select...</option>
+                @foreach (var row in suppliers)
+                {
+                    if (row.ArtistId.ToString() == ArtistId)
+                    {
+                        <option value="@row[0]" selected>@row[1]</option>
+                    }
+                    else
+                    {
+                        <option value="@row[0]">@row[1]</option>
+                    }
+                }
+            </select><br />
+            <input name="ReleaseYear" id="ReleaseYear" type="number" value="@ReleaseYear" min="1950" max="2018" /><br />
+            <input type="text" name="ReleaseLabel" value="@ReleaseLabel" /><br />
+
+        </div>
+        <div class="col-sm-offset-4">
+            <button type="submit" name="theButton" id="updateButton" class="btn btn-primary" value="update">Update</button>&nbsp;&nbsp;&nbsp;
+            <button type="submit" name="theButton" id="deleteButton" class="btn btn-primary" value="delete" formnovalidate>Delete</button>&nbsp;&nbsp;&nbsp;
+            <button type="submit" name="theButton" id="cancelButton" class="btn btn-primary" value="cancel" formnovalidate>Cancel</button><br /><br />
+        </div>
+        @* this javascript will allow for a confirmation dialog to appear
+            when a particular button is pressed (theDelete) *@
+        <script type="text/javascript">
+                document.getElementById("deleteButton").onclick = ConfirmDelete;
+                function ConfirmDelete() {
+                    return confirm("Are you sure you want to remove @title");
+                }
+        </script>
+    </form>
+</div>

@@ -1,0 +1,139 @@
+﻿@{
+    Page.Title = "Title goes here";
+    Layout = "~/_Layout.cshtml";
+    var formButton = Request.Form["formButton"];
+
+    string title = "";
+    string artistId = "0";
+    string year = "";
+    string labelInput = "";
+
+
+    var db = Database.Open("CDB");
+
+
+    string artistQuery = "SELECT ArtistId, Name From Artists ORDER BY Name";
+    var artist = db.Query(artistQuery);
+
+    Validation.Add("title",
+        Validator.Required("Title is a required field"),
+        Validator.StringLength(160, 1, "Title is limited to 160 characters"));
+
+    Validation.Add("year",
+       
+       Validator.Range(1950, 2018, "year must be between 1950 to 2018"));
+
+    Validation.Add("labelInput",
+    Validator.StringLength(50, 1, "Label is limited to 50 characters"));
+
+
+
+
+}
+<div>
+    @if (IsPost)
+    {
+        if (formButton.Equals("reset"))
+        {
+            <p style="color:red; text-align:center">Cleared by user.</p>
+            
+        }
+        else
+        {
+            title = Request.Form["title"];
+            artistId = Request.Form["artistList"];
+            year = Request.Form["year"];
+            labelInput = Request.Form["labelInput"];
+
+            if (Validation.IsValid())
+            {
+                if (artistId.Equals("0"))
+                {
+                    <p style="color:red; text-align:center">Please select a Artist</p>
+                }
+                else if (year == "")
+                {
+                    <p style="color:red; text-align:center">Please write a year B/W 1950 to 2018</p>
+                }
+                else
+                {
+                    try
+                    {
+                        db = Database.Open("CDB");
+                        var insertCommand =
+                            " INSERT INTO Albums (Title, ArtistId, ReleaseYear, ReleaseLabel) "
+                            + " VALUES(@0, @1, @2, @3)";
+                        db.Execute(insertCommand, title,
+                            string.IsNullOrEmpty(artistId) ? null : artistId,
+                            year,
+                            labelInput,
+                            0);
+                        <p style="color:blue; font-size:20px; text-align:center">
+                            "@title" Added to the database.
+                        </p>
+                    }
+                    catch (Exception ex)
+                    {
+                        <p>
+                            @ex.Message
+                        </p>
+    }
+                }
+            }
+        }
+    }
+</div>
+
+
+
+
+
+
+@section banner
+{
+    <h1>Excercise03: Database Data Entry</h1>
+}
+<div>
+    <h2>Enter Album: </h2>
+</div>
+
+
+<div>
+    <form id="theForm" action="" method="post">
+        <div class="row">
+            <div class="col-sm-5 text-right">
+                <label for="title">Title:</label><br />
+                <label for="artistList">Artist:</label><br />
+                <label for="year">Year:</label><br />
+                <label for="labelInput">Label:</label><br />
+            </div>
+
+            <div class="col-sm-5">
+                <input name="title" id="title" type="text" value="@title" title="title" />
+                @Html.ValidationMessage("title")<br />
+
+                <select name="artistList" id="artistList">
+                    <option value="0">Select Artist</option>
+                    @foreach (var row in artist)
+                    {
+                        <option value="@row[0]" @(row[0].ToString() == artistId ? "selected" : null)>@row[1]</option>
+                    }
+                </select><br />
+
+                <input name="year" id="year" type="number" value="@year" min="1950" max="2018" /><br />
+
+                <input name="Label" id="Label" type="text" value="@labelInput" title="Label" />
+            </div>
+        </div>
+
+        <div class="col-sm-11 text-center">
+            <button type="submit" name="formButton" value="submit"
+                            class="btn btn-primary">Add</button>&nbsp;&nbsp;
+
+            <button type="submit" name="formButton" value="reset"
+                    class="btn">
+                Clear
+            </button>
+        </div>
+    </form> 
+</div>
